@@ -1,0 +1,41 @@
+name: Deploy to AWS Lambda
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Package Lambda function
+        run: zip -r getAICompletion.zip .
+
+      - name: Configure AWS credentials from assumed role
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::373321924649:role/GithubActions
+          aws-region: us-east-1
+
+      - name: Deploy to Lambda
+        run: |
+            aws lambda update-function-code \
+              --function-name getAICompletion \
+              --zip-file fileb://getAICompletion.zip
