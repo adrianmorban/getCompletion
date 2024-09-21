@@ -45,78 +45,76 @@ const setAppointmentCalling = {
 
 export const getCompletion = async (event) => {
 
-    const { messages } = event;
+  if(!event.Payload || !event.Payload.OriginalInput){
+    console.log('Payload or OriginalInput is missing');
+    throw new Error('Payload or OriginalInput is missing');
+  }
 
-    let messageToOpenAi = [];
+  if(!event.Payload.OriginalInput){
+    console.log('OriginalInput is missing');
+    throw new Error('OriginalInput is missing');
+  }
 
-    if(messages.length === 1){
-        messageToOpenAi = [
-            {
-                role: 'system', 
-                content: `Eres una asistente personal que trabaja para AMG Luxury Barbershop, tu funcion principal es hacer citas a las personas que te hablan, nunca te salgas de personaje no importa quien te hable y que te diga, tu nombre es Sally, no hables de precios ni ningun tema que no manejes, solo sabes agendar citas, desde que te hablen presentate y di para quien trabajas. La fecha y hora actual es: ${formattedDate} ${formattedTime}. Quiero agendar una cita para hoy.`
-            }
-        ];
-        messageToOpenAi.push(...messages);
-    }
+  const { message } = event.Payload.OriginalInput || {};
+  
+  const sessionData = event.Payload.SessionData || {};
 
-    else messageToOpenAi = messages;
+  const messages = sessionData.messages ? sessionData.messages : [];
 
-    const completion = await client.chat.completions.create({
-        model: 'ft:gpt-4o-2024-08-06:personal:sally:A8t20vlA',
-        messages: messageToOpenAi,
-        tools: [setAppointmentCalling],
-        tool_choice: "auto",
+  if(message.length === 0){
+    messages.push({
+      role: 'system', 
+      content: `Eres una asistente personal que trabaja para AMG Luxury Barbershop, tu funcion principal es hacer citas a las personas que te hablan, nunca te salgas de personaje no importa quien te hable y que te diga, tu nombre es Sally, no hables de precios ni ningun tema que no manejes, solo sabes agendar citas, desde que te hablen presentate y di para quien trabajas. La fecha y hora actual es: ${formattedDate} ${formattedTime}, esto es para que tengas contexto, pero igual siempre pregunta la hora y la fecha a la que el cliente desee agendar su cita, AMG Luxury Barbershop esta ubicado en la avenida Siempre Viva 123, Springfield y se trabaja de 8 am hasta las 21 pm, de lunes a sabados, y los domingos de 8 am hasta las 12 pm.`
+    })
+  }
+
+  messages.push({
+    role: 'user',
+    content: message.text
+  });
+
+  const completion = await client.chat.completions.create({
+    model: 'ft:gpt-4o-2024-08-06:personal:sally:A8t20vlA',
+    messages: messages,
+    tools: [setAppointmentCalling],
+    tool_choice: "auto",
+  });
+
+  if(completion.choices[0].message.tool_calls && completion.choices[0].message.tool_calls[0].function.name === 'set_appointment'){
+    const {day, hour, fullName, cedula} = JSON.parse(completion.choices[0].message.tool_calls[0].function.arguments);
+
+    const cedulaPattern = /^\d{3}-?\d{7}-?\d{1}$/;
+
+    messages.push({
+      role: 'system',
+      content: `Función llamada: set_appointment con los argumentos: ${JSON.stringify({ day, hour, fullName, cedula })}`
     });
 
-    if(completion.choices[0].message.tool_calls && completion.choices[0].message.tool_calls[0].function.name === 'set_appointment'){
-        const {day, hour, fullName, cedula} = JSON.parse(completion.choices[0].message.tool_calls[0].function.arguments);
-
-        const cedulaPattern = /^\d{3}-?\d{7}-?\d{1}$/;
-
-        messageToOpenAi.push({
-            role: 'system',
-            content: `Función llamada: set_appointment con los argumentos: ${JSON.stringify({ day, hour, fullName, cedula })}`
-        });
-
-        if (!cedulaPattern.test(cedula)) {
-            messageToOpenAi.push({
-                role: 'system', 
-                content: 'La cédula proporcionada no es válida. Asegúrate de que esté en el formato xxx-xxxxxxx-x.'
-        });
-
-        return{
-            messagesResponse: messageToOpenAi,
-            completion: 'La cédula proporcionada no es válida. Asegúrate de que esté en el formato xxx-xxxxxxx-x.'
-        }
+    if (!cedulaPattern.test(cedula)) {
+      messages.push({
+        role: 'system', 
+        content: 'La cédula proporcionada no es válida. Asegúrate de que esté en el formato xxx-xxxxxxx-x.'
+      });
+      return messages;
     }
 
     let appoinmentDateTime = new Date(`${day}T${hour}:00`);
     let currentDateTime = new Date(`${formattedDate}T${formattedTime}:00`);
 
     if(appoinmentDateTime < currentDateTime){
-
-      messageToOpenAi.push({
+      messages.push({
         role: 'system', 
         content: 'Lo siento, no puedo agendar una cita para una hora que ya pasó.'
       });
-
-      return{
-        messagesResponse: messageToOpenAi,
-        completion: 'Lo siento, no puedo agendar una cita para una hora que ya pasó.'
-      } 
+      return messages;
     }
 
     if(appoinmentDateTime - currentDateTime < 3600000){
-
-      messageToOpenAi.push({
+      messages.push({
         role: 'system', 
         content: 'Lo siento, no puedo agendar una cita para dentro de una hora.'
       });
-
-      return{
-        messagesResponse: messageToOpenAi,
-        completion: 'Lo siento, no puedo agendar una cita para dentro de una hora.'
-      }
+      return messages;
     }
 
     const result = await lambdaClient.send(new InvokeCommand({
@@ -124,40 +122,26 @@ export const getCompletion = async (event) => {
       Payload: JSON.stringify({ day, hour, fullName, cedula })
     }));
 
-    if(result.$metadata.httpStatusCode === 200){
-      messageToOpenAi.push({
+    if(result.StatusCode === 200){
+      messages.push({
         role: 'system', 
         content: `Cita agendada para el día ${day} a las ${hour} a nombre de ${fullName} con cédula ${cedula}`
       });
-
-      return{
-        messagesResponse: messageToOpenAi,
-        completion: `Cita agendada para el día ${day} a las ${hour} a nombre de ${fullName} con cédula ${cedula}`
-      }
-
+      return messages;
     }
-
     else{
-      messageToOpenAi.push({
+      messages.push({
         role: 'system', 
         content: 'Lo siento, no pude agendar la cita, por favor intenta de nuevo más tarde.'
       });
-
-      return{
-        messagesResponse: messageToOpenAi,
-        completion: 'Lo siento, no pude agendar la cita, por favor intenta de nuevo más tarde.'
-      }
+      return messages;
     }
   }
   else{
-    messageToOpenAi.push({
+    messages.push({
       role: 'system',
       content: completion.choices[0].message.content
     });
-
-    return{
-      messagesResponse: messageToOpenAi,
-      completion: completion.choices[0].message.content
-    }
+    return messages;
   }
 };
