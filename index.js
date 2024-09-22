@@ -107,12 +107,13 @@ export const getCompletion = async (event) => {
 
     const result = await lambdaClient.send(new InvokeCommand({
       FunctionName: 'setAppointment',
+      InvocationType: 'RequestResponse',
       Payload: JSON.stringify({ day, hour, fullName, cedula })
     }));
 
     messages.push({
       role: 'system', 
-      content: `Resultado de la función setAppointment: ${JSON.stringify(result.StatusCode)}`
+      content: `Resultado de la función setAppointment: ${JSON.stringify(result.Payload)}`
     });
 
     return messages;
