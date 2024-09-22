@@ -50,9 +50,7 @@ export const getCompletion = async (event) => {
     throw new Error('SessionData or OriginalInput is missing');
   }
 
-  return event.OriginalInput.text;
-
-  const message = event.OriginalInput.Payload || {};
+  const message = event.OriginalInput.text.Payload || "Mensaje de prueba";
   
   const sessionData = event.SessionData.Payload || {};
 
@@ -60,7 +58,7 @@ export const getCompletion = async (event) => {
 
   messages.push({
     role: 'user',
-    content: `${message.text} {${formattedDate} - ${formattedTime}}`
+    content: `${message} {${formattedDate} - ${formattedTime}}`
   });
 
   const completion = await client.chat.completions.create({
