@@ -45,6 +45,8 @@ const setAppointmentCalling = {
 
 export const getCompletion = async (event) => {
 
+  return event;
+
   // {
   //   "message": {
   //     "message_id": 51,
