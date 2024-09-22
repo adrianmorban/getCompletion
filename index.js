@@ -49,7 +49,9 @@ export const getCompletion = async (event) => {
     console.log('SessionData or OriginalInput is missing');
     throw new Error('SessionData or OriginalInput is missing');
   }
-  
+
+  return event.OriginalInput.Payload;
+
   const message = event.OriginalInput.Payload || {};
   
   const sessionData = event.SessionData.Payload || {};
