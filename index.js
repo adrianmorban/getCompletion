@@ -45,8 +45,6 @@ const setAppointmentCalling = {
 
 export const getCompletion = async (event) => {
 
-  return event;
-
   // {
   //   "message": {
   //     "message_id": 51,
@@ -78,16 +76,11 @@ export const getCompletion = async (event) => {
     throw new Error('Payload or OriginalInput is missing');
   }
 
-  if(!event.Payload.OriginalInput){
-    console.log('OriginalInput is missing');
-    throw new Error('OriginalInput is missing');
-  }
-
   const { message } = event.Payload.OriginalInput || {};
   
   const sessionData = event.Payload.SessionData || {};
 
-  const messages = sessionData.messages ? sessionData.messages : [];
+  const messages = sessionData.result?.messages || [];
 
   messages.push({
     role: 'user',
