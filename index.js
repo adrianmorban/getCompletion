@@ -45,33 +45,7 @@ const setAppointmentCalling = {
 
 export const getCompletion = async (event) => {
 
-  return event;
-
-  // {
-  //   "message": {
-  //     "message_id": 51,
-  //     "from": {
-  //       "id": 987654321,
-  //       "is_bot": false,
-  //       "first_name": "John",
-  //       "last_name": "Doe",
-  //       "language_code": "en"
-  //     },
-  //     "chat": {
-  //       "id": 987654321,
-  //       "first_name": "John",
-  //       "last_name": "Doe",
-  //       "type": "private"
-  //     },
-  //     "date": 1636578875,
-  //     "text": "Hello, world!"
-  //   },
-  //   "SessionData": {
-  //     "result": {
-  //       "sessionID": "987654321"
-  //     }
-  //   }
-  // }
+  return event.Payload;
 
   if(!event.Payload || !event.Payload.OriginalInput){
     console.log('Payload or OriginalInput is missing');
