@@ -50,7 +50,7 @@ export const getCompletion = async (event) => {
     throw new Error('SessionData or OriginalInput is missing');
   }
 
-  const message = event.OriginalInput.text.Payload || "Mensaje de prueba";
+  const message = event.OriginalInput.text || "Mensaje de prueba";
   
   const sessionData = event.SessionData.Payload || {};
 
