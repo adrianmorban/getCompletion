@@ -111,13 +111,6 @@ export const getCompletion = async (event) => {
       Payload: JSON.stringify({ day, hour, fullName, cedula })
     }));
 
-    messages.push({
-      role: 'system', 
-      content: `Resultado de la función setAppointment: ${JSON.stringify(result.Payload)}`
-    });
-
-    return messages;
-
     if(result.StatusCode === 200){
       messages.push({
         role: 'system', 
