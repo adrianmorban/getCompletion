@@ -45,7 +45,7 @@ const setAppointmentCalling = {
 
 export const getCompletion = async (event) => {
 
-  return event.Payload;
+  return event;
 
   if(!event.Payload || !event.Payload.OriginalInput){
     console.log('Payload or OriginalInput is missing');
