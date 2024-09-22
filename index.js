@@ -63,7 +63,7 @@ export const getCompletion = async (event) => {
 
   messages.push({
     role: 'user',
-    content: message.text
+    content: `${message.text} {${formattedDate} - ${formattedTime}}`
   });
 
   const completion = await client.chat.completions.create({
