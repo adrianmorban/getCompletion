@@ -52,9 +52,9 @@ export const getCompletion = async (event) => {
 
   const message = event.OriginalInput.text || "Mensaje de prueba";
   
-  const sessionData = event.SessionData.Payload || {};
+  const sessionData = event.SessionData.result || {};
 
-  const messages = sessionData.result?.messages || [];
+  const { messages } = sessionData || [];
 
   messages.push({
     role: 'user',
