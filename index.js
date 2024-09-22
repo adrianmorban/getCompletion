@@ -112,7 +112,7 @@ export const getCompletion = async (event) => {
 
     messages.push({
       role: 'system', 
-      content: `Resultado de la función setAppointment: ${JSON.stringify(result)}`
+      content: `Resultado de la función setAppointment: ${JSON.stringify(result.StatusCode)}`
     });
 
     return messages;
