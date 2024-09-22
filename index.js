@@ -45,16 +45,14 @@ const setAppointmentCalling = {
 
 export const getCompletion = async (event) => {
 
-  return event.SessionData;
-
-  if(!event.Payload || !event.Payload.OriginalInput){
-    console.log('Payload or OriginalInput is missing');
-    throw new Error('Payload or OriginalInput is missing');
+  if(!event.SessionData || !event.OriginalInput){
+    console.log('SessionData or OriginalInput is missing');
+    throw new Error('SessionData or OriginalInput is missing');
   }
 
-  const { message } = event.Payload.OriginalInput || {};
+  const { message } = event.OriginalInput.Payload || {};
   
-  const sessionData = event.Payload.SessionData || {};
+  const sessionData = event.SessionData.Payload || {};
 
   const messages = sessionData.result?.messages || [];
 
